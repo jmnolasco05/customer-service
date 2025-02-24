@@ -1,1 +1,21 @@
-{}
+quarkus:
+  datasource:
+    db-kind: postgresql
+    username: admin
+    password: p@ssw0rd
+    jdbc:
+      url: jdbc:postgresql://localhost:5432/customer-mgmt
+      min-size: 3
+      max-size: 13
+  hibernate-orm:
+    database-generation: update
+    dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    migrate-at-start: true
+    location: db/migration
+    baseline-on-migrate: true
+  http:
+    port: 8080
+  logging:
+    level:
+      io.quarkus: DEBUG
