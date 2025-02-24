@@ -1,6 +1,7 @@
 package com.jdev.customers.resource;
 
 import com.jdev.customers.model.Customer;
+import com.jdev.customers.model.CustomerUpdateDTO;
 import com.jdev.customers.service.CustomerService;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -26,14 +27,14 @@ public class CustomerResource {
     }
 
     @GET
-    public List<Customer> getCustomers() {
-        return customerService.listAll();
-    }
-
-    @GET
-    @Path("/country/{countryCode}")
-    public List<Customer> getCustomersByCountry(@PathParam("countryCode") String countryCode) {
-        return customerService.listByCountry(countryCode);
+    public List<Customer> getCustomers(@QueryParam("country") String country) {
+        List<Customer> customers;
+        if (country != null && !country.isEmpty()) {
+            customers = customerService.listByCountry(country);
+        } else {
+            customers = customerService.listAll();
+        }
+        return customers;
     }
 
     @GET
@@ -45,11 +46,16 @@ public class CustomerResource {
                 .build();
     }
 
-    @PUT
+    @PATCH
     @Path("/{id}")
-    public Response updateCustomer(@PathParam("id") long id, @Valid Customer customer) {
-        customerService.update(id, customer);
-        return Response.status(Response.Status.OK).entity(customer).build();
+    public Response updateCustomer(@PathParam("id") long id, @Valid CustomerUpdateDTO customerUpdateDTO) {
+        Optional<Customer> customerOptional = customerService.findById(id);
+        if (customerOptional.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        customerService.update(id, customerUpdateDTO);
+        return Response.status(Response.Status.OK).build();
     }
 
     @DELETE

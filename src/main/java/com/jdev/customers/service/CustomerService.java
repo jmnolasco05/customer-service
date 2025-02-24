@@ -2,6 +2,7 @@ package com.jdev.customers.service;
 
 import com.jdev.customers.model.CountryDTO;
 import com.jdev.customers.model.Customer;
+import com.jdev.customers.model.CustomerUpdateDTO;
 import com.jdev.customers.repository.CustomerRepository;
 import com.jdev.customers.service.client.IRestCountryAPIClient;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -36,33 +37,33 @@ public class CustomerService {
     }
 
     public List<Customer> listByCountry(String country) {
-        return customerRepository.find("country", country).list();
+        return customerRepository.find("LOWER(country) = LOWER(?1)", country).list();
     }
 
-    public Optional<Customer> findById(Long id) {
+    public Optional<Customer> findById(long id) {
         return customerRepository.findByIdOptional(id);
     }
 
     @Transactional
-    public void update(long id, Customer customer) {
-        Optional<Customer> customerOptional = customerRepository.findByIdOptional(id);
+    public void update(long id, CustomerUpdateDTO customerUpdateDTO) {
 
+        Optional<Customer> customerOptional = customerRepository.findByIdOptional(id);
         if (customerOptional.isEmpty()) {
-            throw new NotFoundException(String.format("Customer with id %s not found", id));
+            throw new NotFoundException(String.format("No Customer found with id[%s]", id));
         }
 
-        Customer customerToUpdate = customerOptional.get();
-        customerToUpdate.setEmail(customer.getEmail());
-        customerToUpdate.setAddress(customer.getAddress());
-        customerToUpdate.setPhone(customer.getPhone());
-        customerToUpdate.setCountry(customer.getCountry());
-        customerToUpdate.setDemonym(getDemonym(customer.getCountry()));
-        customerRepository.persist(customerToUpdate);
+        Customer customer = customerOptional.get();
+        customer.setEmail(customerUpdateDTO.email());
+        customer.setAddress(customerUpdateDTO.address());
+        customer.setPhone(customerUpdateDTO.phone());
+        customer.setCountry(customerUpdateDTO.country());
+        customer.setDemonym(getDemonym(customerUpdateDTO.country()));
+        customerRepository.persist(customer);
     }
 
 
     @Transactional
-    public void deleteById(Long id) {
+    public void deleteById(long id) {
         customerRepository.deleteById(id);
     }
 
