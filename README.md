@@ -16,7 +16,7 @@ El proyecto sigue una arquitectura limpia y modular, donde cada clase tiene resp
 - **CustomerService**: Contiene la lógica de negocio para manejar las operaciones CRUD de los clientes.
 - **ApiResponse**: Estandariza las respuestas de la API, proporcionando un formato consistente.
 - **Customer**: Representa la entidad de cliente que se almacenará en la base de datos.
-
+![customer-service.png](images/customer-service.png)
 ### Decisiones de diseño
 
 - **Uso de Quarkus**: Elegimos Quarkus porque ofrece tiempos de inicio rápidos y un bajo consumo de memoria, lo cual es ideal para aplicaciones de microservicios.
