@@ -1,5 +1,6 @@
 package com.jdev.customers.resource;
 
+import com.jdev.customers.common.ApiResponse;
 import com.jdev.customers.model.Customer;
 import com.jdev.customers.model.CustomerUpdateDTO;
 import com.jdev.customers.service.CustomerService;
@@ -21,29 +22,42 @@ public class CustomerResource {
     CustomerService customerService;
 
     @POST
-    public Response createCustomer(Customer customer) {
+    public Response createCustomer(@Valid Customer customer) {
         customerService.add(customer);
-        return Response.status(Response.Status.CREATED).entity(customer).build();
+        ApiResponse response = new ApiResponse("success", customer, "Customer created successfully");
+        return Response.status(Response.Status.CREATED).entity(response).build();
     }
 
     @GET
-    public List<Customer> getCustomers(@QueryParam("country") String country) {
+    public Response getCustomers(@QueryParam("country") String country) {
         List<Customer> customers;
         if (country != null && !country.isEmpty()) {
             customers = customerService.listByCountry(country);
         } else {
             customers = customerService.listAll();
         }
-        return customers;
+
+        ApiResponse response;
+        if (customers.isEmpty()) {
+            response = new ApiResponse("error", null, "No customers found");
+            return Response.status(Response.Status.NOT_FOUND).entity(response).build();
+        } else {
+            response = new ApiResponse("success", customers, "Customer retrieved successfully");
+            return Response.status(Response.Status.OK).entity(response).build();
+        }
     }
 
     @GET
     @Path("/{id}")
     public Response getCustomer(@PathParam("id") long id) {
         Optional<Customer> customer = customerService.findById(id);
-        return customer.map(Response::ok)
-                .orElse(Response.status(Response.Status.NOT_FOUND))
-                .build();
+        if(customer.isEmpty()) {
+            throw new NotFoundException(String.format("No Customer found with id[%s]", id));
+        }
+
+        ApiResponse response = new ApiResponse("success", customer, "Customer retrieved successfully");
+        return Response.status(Response.Status.OK).entity(response).build();
+
     }
 
     @PATCH
@@ -51,18 +65,23 @@ public class CustomerResource {
     public Response updateCustomer(@PathParam("id") long id, @Valid CustomerUpdateDTO customerUpdateDTO) {
         Optional<Customer> customerOptional = customerService.findById(id);
         if (customerOptional.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+            throw new NotFoundException(String.format("No Customer found with id[%s]", id));
         }
 
         customerService.update(id, customerUpdateDTO);
-        return Response.status(Response.Status.OK).build();
+        ApiResponse response = new ApiResponse("success", null, "Customer updated successfully");
+        return Response.status(Response.Status.OK).entity(response).build();
     }
 
     @DELETE
     @Path("/{id}")
     public Response deleteCustomer(@PathParam("id") long id) {
-        customerService.deleteById(id);
-        return Response.status(Response.Status.OK).build();
+        boolean deleted = customerService.deleteById(id);
+        if(!deleted) {
+            throw new NotFoundException(String.format("No Customer found with id[%s]", id));
+        }
+
+        return Response.status(Response.Status.NO_CONTENT).build();
     }
 
 }

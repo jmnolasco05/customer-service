@@ -8,6 +8,7 @@ import com.jdev.customers.service.client.IRestCountryAPIClient;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
@@ -17,7 +18,6 @@ import java.util.logging.Logger;
 
 @ApplicationScoped
 public class CustomerService {
-    Logger logger = Logger.getLogger(CustomerService.class.getName());
 
     @Inject
     CustomerRepository customerRepository;
@@ -28,8 +28,14 @@ public class CustomerService {
 
     @Transactional
     public void add(Customer customer) {
-        customer.setDemonym(getDemonym(customer.getCountry()));
-        customerRepository.persist(customer);
+        try {
+            customer.setDemonym(getDemonym(customer.getCountry()));
+            customerRepository.persist(customer);
+        } catch (InternalServerErrorException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new InternalServerErrorException("Error adding new customer", e);
+        }
     }
 
     public List<Customer> listAll() {
@@ -47,33 +53,44 @@ public class CustomerService {
     @Transactional
     public void update(long id, CustomerUpdateDTO customerUpdateDTO) {
 
-        Optional<Customer> customerOptional = customerRepository.findByIdOptional(id);
-        if (customerOptional.isEmpty()) {
-            throw new NotFoundException(String.format("No Customer found with id[%s]", id));
-        }
+        try {
 
-        Customer customer = customerOptional.get();
-        customer.setEmail(customerUpdateDTO.email());
-        customer.setAddress(customerUpdateDTO.address());
-        customer.setPhone(customerUpdateDTO.phone());
-        customer.setCountry(customerUpdateDTO.country());
-        customer.setDemonym(getDemonym(customerUpdateDTO.country()));
-        customerRepository.persist(customer);
+            Optional<Customer> customerOptional = customerRepository.findByIdOptional(id);
+            if (customerOptional.isEmpty()) {
+                throw new NotFoundException(String.format("No Customer found with id[%s]", id));
+            }
+
+            Customer customer = customerOptional.get();
+            customer.setEmail(customerUpdateDTO.email());
+            customer.setAddress(customerUpdateDTO.address());
+            customer.setPhone(customerUpdateDTO.phone());
+            customer.setCountry(customerUpdateDTO.country());
+            customer.setDemonym(getDemonym(customerUpdateDTO.country()));
+            customerRepository.persist(customer);
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new InternalServerErrorException("Error updating Customer", e);
+        }
     }
 
 
     @Transactional
-    public void deleteById(long id) {
-        customerRepository.deleteById(id);
+    public boolean deleteById(long id) {
+        try {
+            return customerRepository.deleteById(id);
+        } catch (Exception e) {
+            throw new InternalServerErrorException("Error deleting Customer", e);
+        }
     }
 
     private String getDemonym(String countryCode) {
-        CountryDTO[] countryDTOs = null;
+        CountryDTO[] countryDTOs;
 
         try {
             countryDTOs = restCountryAPIClient.getCountry(countryCode);
         } catch (Exception e) {
-            logger.warning(String.format("Problem fetching country demonym using code %s", countryCode));
+            throw new InternalServerErrorException(String.format("Could not get country by code[%s]", countryCode));
         }
 
         return Optional.ofNullable(countryDTOs)

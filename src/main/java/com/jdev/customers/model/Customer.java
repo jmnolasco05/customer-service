@@ -12,33 +12,34 @@ public class Customer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
+    @NotBlank(message = "First Name is required")
     @Column(name = "first_name", nullable = false, length = 100)
     private String firstName;
 
     @Column(name = "middle_name", length = 100)
     private String middleName;
 
-    @NotBlank
+    @NotBlank(message = "Last Name is required")
     @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
 
     @Column(name = "second_last_name", length = 100)
     private String secondLastName;
 
-    @Email
-    @NotBlank
+    @Email(message = "Email must be valid")
+    @NotBlank(message = "Email is required")
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
+    @NotBlank(message = "Address is required")
     @Column(nullable = false, columnDefinition = "TEXT")
     private String address;
 
-    @NotBlank
+    @NotBlank(message = "Phone is required")
     @Column(nullable = false, length = 15)
     private String phone;
 
-    @NotBlank
+    @NotBlank(message = "Country is required")
     @Column(nullable = false, length = 2)
     private String country;
 
