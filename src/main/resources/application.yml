@@ -17,6 +17,16 @@ quarkus:
   rest-client:
     "com.jdev.customers.service.client.IRestCountryAPIClient":
       url: "https://restcountries.com/v3.1/alpha/"
+  smallrye-openapi:
+    title: Customer Management API
+    description: API para gestionar operaciones CRUD para los clientes.
+    version: 1.0.0
+    path: /openapi
+    ui:
+      enabled: true
+      path: /swagger-ui
+  swagger-ui:
+    enable: true
   http:
     port: 8080
   logging:

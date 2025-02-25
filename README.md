@@ -1,65 +1,210 @@
-# customer-service
+# Customer Management API
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+Esta API proporciona funcionalidades CRUD para gestionar clientes.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+## Descripción
 
-## Running the application in dev mode
+La API de Gestión de Clientes permite crear, leer, actualizar y eliminar información de clientes. Utiliza Quarkus, Hibernate ORM, PostgreSQL y MicroProfile OpenAPI para una solución robusta y bien documentada.
 
-You can run your application in dev mode that enables live coding using:
+### Arquitectura
 
-```shell script
-./mvnw quarkus:dev
-```
+![arquitectura.jpg](images/arquitectura.jpg)
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+El proyecto sigue una arquitectura limpia y modular, donde cada clase tiene responsabilidades claras:
 
-## Packaging and running the application
+- **CustomerResource**: Define los endpoints de la API para crear, leer, actualizar y eliminar clientes.
+- **CustomerService**: Contiene la lógica de negocio para manejar las operaciones CRUD de los clientes.
+- **ApiResponse**: Estandariza las respuestas de la API, proporcionando un formato consistente.
+- **Customer**: Representa la entidad de cliente que se almacenará en la base de datos.
 
-The application can be packaged using:
+### Decisiones de diseño
 
-```shell script
-./mvnw package
-```
+- **Uso de Quarkus**: Elegimos Quarkus porque ofrece tiempos de inicio rápidos y un bajo consumo de memoria, lo cual es ideal para aplicaciones de microservicios.
+- **PostgreSQL como base de datos**: Usamos PostgreSQL para almacenar los datos de los clientes, ya que es una base de datos relacional robusta que proporciona soporte para consultas complejas y transacciones.
+- **Flyway para la migración de bases de datos**: Usamos Flyway para gestionar el esquema de la base de datos de manera versionada. Esto facilita la administración de cambios en la base de datos durante el ciclo de vida del proyecto.
+- **SmallRye OpenAPI para documentación de la API**: Utilizamos SmallRye OpenAPI para generar la documentación de la API de manera automática y accesible a través de Swagger UI.
 
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+## Tecnologías Utilizadas
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
+-   **Quarkus:** Framework Java nativo de Kubernetes.
+-   **Hibernate ORM:** ORM para la persistencia de datos.
+-   **PostgreSQL:** Base de datos relacional.
+-   **MicroProfile OpenAPI:** Generación automática de documentación OpenAPI (Swagger).
+-   **JAX-RS:** Para la creación de servicios RESTful.
+-   **Jakarta Validation:** Para la validación de datos de entrada.
+-   **Flyway:** Para la gestión de migraciones de base de datos.
+-   **RestClient:** Para consumir servicios externos.
 
-If you want to build an _über-jar_, execute the following command:
+## Requisitos
 
-```shell script
-./mvnw package -Dquarkus.package.jar.type=uber-jar
-```
+-   Java 21+
+-   Docker (opcional, para ejecutar PostgreSQL)
+-   Maven o Gradle
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
+## Endpoints
 
-## Creating a native executable
+### 1. **Crear un cliente**
 
-You can create a native executable using:
+- **Método**: `POST`
+- **Ruta**: `/customers`
+- **Descripción**: Crea un nuevo cliente en la base de datos.
+- **Cuerpo de la solicitud**:
+  ```json
+  {
+    "firstName": "Juan",
+    "middleName": "Jose",
+    "lastName": "Perez",
+    "secondLastName": "Ramirez",
+    "email": "juanjopr@example.com",
+    "address": "1234 Elm Street",
+    "phone": "+1234567890",
+    "country": "US"
+  } 
+  ```
+- **Respuestas**:
+  - 201 Created: Cliente creado correctamente. 
+  - 400 Bad Request: Los datos proporcionados no son válidos.
 
-```shell script
-./mvnw package -Dnative
-```
+    Ejemplo respuesta exitosa:
+    ```json
+    {
+      "status": "success",
+      "data": {
+        "id": 1,
+        "firstName": "Juan",
+        "middleName": "Jose",
+        "lastName": "Perez",
+        "secondLastName": "Ramirez",
+        "email": "juanjopr@example.com",
+        "address": "1234 Elm Street",
+        "phone": "+1234567890",
+        "country": "US",
+        "demonym": "American"
+      },
+      "message": "Customer created successfully"
+    }
+    ```
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
+### 2. **Obtener todos los clientes**
 
-```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true
-```
+- **Método**: `GET`
+- **Ruta**: `/customers`
+- **Descripción**: Obtiene todos los clientes, con la opción de filtrar por país.
+- **Parámetros de consulta**:
+  - country (opcional): Filtra los clientes por el país especificado.
+- **Respuestas**:
+    - 200 Ok: Clientes obtenidos correctamente.
+    - 404 Not Found:  No se encontraron clientes.
 
-You can then execute your native executable with: `./target/customer-service-1.0.0-SNAPSHOT-runner`
+      Ejemplo respuesta exitosa:
+      ```json
+      {
+        "status": "success",
+        "data": [ 
+           {
+            "id": 1,
+            "firstName": "Juan",
+            "middleName": "Jose",
+            "lastName": "Perez",
+            "secondLastName": "Ramirez",
+            "email": "juanjopr@example.com",
+            "address": "1234 Elm Street",
+            "phone": "+1234567890",
+            "country": "US",
+            "demonym": "American"
+          }
+        ],
+        "message": "Customer created successfully"
+      }
+      ```
 
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
+### 3. **Obtener un cliente por ID**
 
-## Related Guides
+- **Método**: `GET`
+- **Ruta**: `/customers/{id}`
+- **Descripción**: Obtiene un cliente específico basado en su ID.
+- **Parámetros de consulta**:
+    - id (obligatorio): El ID del cliente.
+- **Respuestas**:
+    - 200 Ok: Cliente obtenido correctamente.
+    - 404 Not Found:  No se encontro al cliente.
 
-- REST ([guide](https://quarkus.io/guides/rest)): A Jakarta REST implementation utilizing build time processing and Vert.x. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it.
-- Flyway ([guide](https://quarkus.io/guides/flyway)): Handle your database schema migrations
-- Hibernate Validator ([guide](https://quarkus.io/guides/validation)): Validate object properties (field, getter) and method parameters for your beans (REST, CDI, Jakarta Persistence)
-- SmallRye OpenAPI ([guide](https://quarkus.io/guides/openapi-swaggerui)): Document your REST APIs with OpenAPI - comes with Swagger UI
-- REST Jackson ([guide](https://quarkus.io/guides/rest#json-serialisation)): Jackson serialization support for Quarkus REST. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it
-- YAML Configuration ([guide](https://quarkus.io/guides/config-yaml)): Use YAML to configure your Quarkus application
-- Hibernate ORM with Panache ([guide](https://quarkus.io/guides/hibernate-orm-panache)): Simplify your persistence code for Hibernate ORM via the active record or the repository pattern
-- JDBC Driver - PostgreSQL ([guide](https://quarkus.io/guides/datasource)): Connect to the PostgreSQL database via JDBC
+      Ejemplo respuesta exitosa:
+      ```json
+      {
+        "status": "success",
+        "data": {
+           "id": 1,
+           "firstName": "Juan",
+           "middleName": "Jose",
+           "lastName": "Perez",
+           "secondLastName": "Ramirez",
+           "email": "juanjopr@example.com",
+           "address": "1234 Elm Street",
+           "phone": "+1234567890",
+           "country": "US",
+           "demonym": "American"
+         },
+        "message": "Customer created successfully"
+      }
+      ```
+
+### 4. **Actualizar un cliente**
+
+- **Método**: `PATCH`
+- **Ruta**: `/customers/{id}`
+- **Descripción**: Actualiza la información de un cliente específico.
+- **Parámetros**:
+    - id (obligatorio): El ID del cliente a actualizar.
+- **Cuerpo de la solicitud**:
+  ```json
+  {
+    "email": "juanjopr@example.com",
+    "address": "1234 Elm Street",
+    "phone": "+1234567890",
+    "country": "US"
+  } 
+  ```
+- **Respuestas**:
+    - 200 Ok: Cliente obtenido correctamente.
+    - 404 Not Found:  No se encontro al cliente.
+    - 400 Bad Request: Los datos de actualización no son válidos.
+
+      Ejemplo respuesta exitosa:
+      ```json
+      {
+        "status": "success",
+        "data": {
+           "id": 1,
+           "firstName": "Juan",
+           "middleName": "Jose",
+           "lastName": "Perez",
+           "secondLastName": "Ramirez",
+           "email": "juanjopr@example.com",
+           "address": "1234 Elm Street",
+           "phone": "+1234567890",
+           "country": "US",
+           "demonym": "American"
+         },
+        "message": "Customer created successfully"
+      }
+      ```
+  ### 5. **Eliminar un cliente**
+
+- **Método**: `DELETE`
+- **Ruta**: `/customers/{id}`
+- **Descripción**: Elimina un cliente específico basado en su ID.
+- **Parámetros**:
+    - id (obligatorio): El ID del cliente a eliminar.
+- **Respuestas**:
+    - 200 Ok: Cliente obtenido correctamente.
+    - 404 Not Found:  No se encontro al cliente.
+
+## Swagger UI
+Una vez que la aplicación esté corriendo, podrás acceder a la documentación interactiva de la API a través de:
+
+- Swagger UI: http://localhost:8080/q/swagger-ui
+- OpenAPI JSON: http://localhost:8080/openapi
+
+
+
